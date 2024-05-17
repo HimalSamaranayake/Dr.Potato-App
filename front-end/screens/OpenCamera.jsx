@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Text, SafeAreaView, StyleSheet, Image, View, TouchableOpacity } from 'react-native';
 import { Camera } from 'expo-camera';
 
 export default function OpenCamera() {
   const [hasPermission, setHasPermission] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [showPreview, setShowPreview] = useState(false); // Track if preview is shown
+  const cameraRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -12,6 +15,19 @@ export default function OpenCamera() {
       setHasPermission(status === 'granted');
     })();
   }, []);
+
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync();
+      setCapturedImage(photo.uri);
+      setShowPreview(true); // Show the preview after capturing
+    }
+  };
+
+  const retakePicture = () => {
+    setCapturedImage(null); // Reset captured image URI
+    setShowPreview(false); // Hide the preview
+  };
 
   if (hasPermission === null) {
     return <View />;
@@ -24,30 +40,48 @@ export default function OpenCamera() {
     <SafeAreaView style={styles.container}>
       <Image style={styles.backgroundImage} source={require('../assets/BG2.png')} />
       <View style={styles.cameraContainer}>
-        <Camera style={styles.camera} type={type}>
-          <View style={styles.overlay}>
+        {!showPreview && ( // Render camera view only if not showing the preview
+          <Camera style={styles.camera} type={type} ref={cameraRef}>
+            <View style={styles.overlay}>
+              <View style={styles.topLeftCorner} />
+              <View style={styles.topRightCorner} />
+              <View style={styles.bottomLeftCorner} />
+              <View style={styles.bottomRightCorner} />
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Flip"
+                onPress={() => {
+                  setType(
+                    type === Camera.Constants.Type.back
+                      ? Camera.Constants.Type.front
+                      : Camera.Constants.Type.back
+                  );
+                }}
+              />
+            </View>
+          </Camera>
+        )}
+      </View>
+      {!showPreview && ( // Hide cambtn while showing the preview
+        <TouchableOpacity onPress={takePicture}>
+          <View style={styles.cambtn}></View>
+        </TouchableOpacity>
+      )}
+      {showPreview && capturedImage && ( // Show the preview and retake button
+        <View style={styles.previewContainer}>
+          <Image source={{ uri: capturedImage }} style={styles.previewImage} />
+          <View style={styles.previewOverlay}>
             <View style={styles.topLeftCorner} />
             <View style={styles.topRightCorner} />
             <View style={styles.bottomLeftCorner} />
             <View style={styles.bottomRightCorner} />
           </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Flip"
-              onPress={() => {
-                setType(
-                  type === Camera.Constants.Type.back
-                    ? Camera.Constants.Type.front
-                    : Camera.Constants.Type.back
-                );
-              }}
-            />
-          </View>
-        </Camera>
-      </View>
-      <TouchableOpacity onPress={() => console.log('Camera button pressed')}>
-        <View style={styles.cambtn}></View>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={retakePicture} style={styles.retakeButton}>
+            <Text style={styles.retakeButtonText}>Retake</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -70,7 +104,7 @@ const styles = StyleSheet.create({
   },
   camera: {
     width: 340,
-    height: 450,
+    height: 400,
   },
   overlay: {
     position: 'absolute',
@@ -89,7 +123,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-    borderColor: '#00FF00',
+    borderColor: '#000',
   },
   topRightCorner: {
     position: 'absolute',
@@ -99,7 +133,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderTopWidth: 4,
     borderRightWidth: 4,
-    borderColor: '#00FF00',
+    borderColor: '#000',
   },
   bottomLeftCorner: {
     position: 'absolute',
@@ -109,7 +143,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderColor: '#00FF00',
+    borderColor: '#000',
   },
   bottomRightCorner: {
     position: 'absolute',
@@ -119,22 +153,55 @@ const styles = StyleSheet.create({
     height: 50,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderColor: '#00FF00',
+    borderColor: '#000',
   },
   buttonContainer: {
     position: 'absolute',
     bottom: 20,
     alignSelf: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#000',
     flexDirection: 'row',
   },
   cambtn: {
-    marginBottom: 120,
+    marginBottom: 160,
     width: 80,
     height: 80,
     borderRadius: 40, // Make it round
     backgroundColor: 'white',
     alignSelf: 'center',
   },
+  previewContainer: {
+    position: 'absolute',
+    top: 180,
+    left: '50%',
+    transform: [{ translateX: -170 }],
+    width: 340,
+    height: 400,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  previewOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  retakeButton: {
+    position: 'absolute',
+    bottom: 20,
+    backgroundColor: '#000',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  retakeButtonText: {
+    color: '#fff',
+  },
 });
-
