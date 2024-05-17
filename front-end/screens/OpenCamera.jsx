@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Text, SafeAreaView, StyleSheet, Image, View, TouchableOpacity } from 'react-native';
 import { Camera } from 'expo-camera';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook from React Navigation
 
 export default function OpenCamera() {
+  const navigation = useNavigation(); // Get navigation object
   const [hasPermission, setHasPermission] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -57,8 +59,7 @@ export default function OpenCamera() {
                       ? Camera.Constants.Type.front
                       : Camera.Constants.Type.back
                   );
-                }}
-              />
+                } } />
             </View>
           </Camera>
         )}
@@ -69,7 +70,7 @@ export default function OpenCamera() {
         </TouchableOpacity>
       )}
       {showPreview && capturedImage && ( // Show the preview and retake button
-        <View style={styles.previewContainer}>
+        <><View style={styles.previewContainer}>
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
           <View style={styles.previewOverlay}>
             <View style={styles.topLeftCorner} />
@@ -80,12 +81,15 @@ export default function OpenCamera() {
           <TouchableOpacity onPress={retakePicture} style={styles.retakeButton}>
             <Text style={styles.retakeButtonText}>Retake</Text>
           </TouchableOpacity>
-        </View>
+        </View><View style={styles.scanButtonContainer}>
+            <Button title="Scan" color="#841584" onPress={() => navigation.navigate('Scan')} />
+          </View></>
+        
       )}
     </SafeAreaView>
+    
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -203,5 +207,12 @@ const styles = StyleSheet.create({
   },
   retakeButtonText: {
     color: '#fff',
+  },
+
+  scanButtonContainer: {
+    position: 'absolute',
+    bottom: 170, // Adjust position as needed
+    alignSelf: 'center',
+    backgroundColor: 'transparent', // Make background transparent
   },
 });
